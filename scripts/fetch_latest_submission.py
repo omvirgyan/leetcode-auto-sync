@@ -85,3 +85,8 @@ with open(readme_path, 'w', encoding='utf-8') as readme:
 
 print("✅ README.md updated successfully.")
 print(f"🔗 Problem: {problem_url}")
+
+# Step 4: Print README to terminal
+print("\n📄 README.md content:\n")
+with open(readme_path, 'r', encoding='utf-8') as f:
+    print(f.read())
