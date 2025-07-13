@@ -18,15 +18,20 @@ PASSWORD = os.getenv("LEETCODE_PASS")
 if not USERNAME or not PASSWORD:
     raise Exception("❌ Missing LeetCode credentials. Please set LEETCODE_USER and LEETCODE_PASS.")
 
-# 🌐 Set up headless Chrome
+# 🌐 Set up Chrome options
 options = Options()
+# Comment this line while debugging if needed
 options.add_argument('--headless')
 options.add_argument('--disable-gpu')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--disable-blink-features=AutomationControlled')
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+options.add_experimental_option("useAutomationExtension", False)
 
+# Initialize driver
 driver = webdriver.Chrome(options=options)
-wait = WebDriverWait(driver, 15)
+wait = WebDriverWait(driver, 30)
 
 try:
     print("🚀 Opening LeetCode login page...")
@@ -34,10 +39,14 @@ try:
 
     # ⏳ Wait for login form
     print("⏳ Waiting for login form...")
-    username_input = wait.until(EC.presence_of_element_located((By.ID, "id_login")))
-    password_input = driver.find_element(By.ID, "id_password")
+    username_input = wait.until(
+        EC.visibility_of_element_located((By.XPATH, "//input[@name='login' or @id='id_login']"))
+    )
+    password_input = wait.until(
+        EC.visibility_of_element_located((By.XPATH, "//input[@name='password' or @id='id_password']"))
+    )
 
-    # 🧠 Set inputs using JS (important for React fields)
+    # 🧠 Set inputs using JS (for React)
     driver.execute_script("""
         arguments[0].value = arguments[1];
         arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
@@ -51,7 +60,7 @@ try:
     print("🔓 Submitting login form...")
     driver.find_element(By.ID, "signin_btn").click()
 
-    # ✅ Wait for user to be logged in and redirected
+    # ✅ Navigate to submissions
     print("📄 Navigating to submissions...")
     driver.get("https://leetcode.com/submissions/")
     wait.until(EC.presence_of_element_located((By.XPATH, "//a[contains(@href, '/submissions/detail/')]")))
@@ -62,13 +71,13 @@ try:
 
     wait.until(EC.presence_of_element_located((By.CLASS_NAME, "ace_content")))
 
-    # 📝 Extract problem title and solution code
+    # 📝 Extract title and solution code
     title = driver.title.split(" - ")[0].strip()
     filename_slug = title.replace(" ", "_").replace("/", "_")
     date_str = datetime.now().strftime("%Y-%m-%d")
     code = driver.find_element(By.CLASS_NAME, "ace_content").text.strip()
 
-    # 💾 Save solution to file
+    # 💾 Save solution
     solution_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'leetcode-solutions'))
     os.makedirs(solution_dir, exist_ok=True)
     file_path = os.path.join(solution_dir, f"{date_str}_{filename_slug}.txt")
@@ -83,7 +92,7 @@ try:
         readme.write(f"> 🗓️ **{date_str}**\n")
         readme.write("> 🧑‍💻 **Solution**\n\n")
         readme.write("```java\n")
-        readme.write(code[:1000])  # Truncate to 1000 chars to fit GitHub preview
+        readme.write(code[:1000])  # Limit to 1000 characters
         readme.write("\n```\n")
 
     print(f"✅ Solution saved to: {file_path}")
