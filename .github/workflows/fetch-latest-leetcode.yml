@@ -3,7 +3,7 @@ name: 🔁 Sync Latest LeetCode Solution
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *'  # Runs every 6 hours
+    - cron: '0 */6 * * *'
 
 jobs:
   leetcode-sync:
@@ -26,18 +26,20 @@ jobs:
       - name: Install Selenium
         run: pip install selenium
 
-      - name: Install Chrome & ChromeDriver (v114)
+      - name: Install Chrome & Matching ChromeDriver
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip
+          sudo apt-get install -y wget unzip curl jq
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo apt install -y ./google-chrome-stable_current_amd64.deb
 
-          # ✅ Use ChromeDriver v114 (still compatible with Chrome v138 in GitHub Actions)
-          CHROMEDRIVER_VERSION=114.0.5735.90
-          wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
+          CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+')
+          MAJOR_VERSION=$(echo $CHROME_VERSION | cut -d '.' -f 1)
+          DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${MAJOR_VERSION}")
+          wget -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
           unzip /tmp/chromedriver.zip -d /usr/local/bin/
           chmod +x /usr/local/bin/chromedriver
+          echo "✅ Installed Chrome $CHROME_VERSION and ChromeDriver $DRIVER_VERSION"
 
       - name: Run Selenium Script
         run: python scripts/selenium_script.py
