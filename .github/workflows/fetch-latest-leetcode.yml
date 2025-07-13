@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      DISPLAY: ":99"
       LEETCODE_USER: ${{ secrets.LEETCODE_USER }}
       LEETCODE_PASS: ${{ secrets.LEETCODE_PASS }}
 
@@ -22,6 +23,12 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: 🖥️ Start virtual display (xvfb)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          Xvfb :99 -screen 0 1920x1080x24 &
+      
       - name: 🌐 Install latest Google Chrome
         run: |
           wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
