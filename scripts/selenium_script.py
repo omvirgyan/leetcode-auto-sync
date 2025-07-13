@@ -34,11 +34,11 @@ try:
     driver.get("https://leetcode.com/accounts/login/")
     time.sleep(4)
 
-    # Step 2: Enter credentials using latest selectors
+    # Step 2: Enter credentials using correct IDs
     print("✏️ Entering login credentials...")
-    driver.find_element(By.NAME, "login").send_keys(USERNAME)
-    driver.find_element(By.NAME, "password").send_keys(PASSWORD)
-    driver.find_element(By.XPATH, "//button[contains(text(), 'Sign in')]").click()
+    driver.find_element(By.ID, "id_login").send_keys(USERNAME)
+    driver.find_element(By.ID, "id_password").send_keys(PASSWORD)
+    driver.find_element(By.ID, "signin_btn").click()
     time.sleep(6)
 
     # Step 3: Navigate to submissions
