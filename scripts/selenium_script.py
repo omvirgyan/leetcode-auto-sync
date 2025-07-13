@@ -1,76 +1,67 @@
 import os
-import time
 from datetime import datetime
 
-# ✅ Auto-install matching ChromeDriver
 import chromedriver_autoinstaller
 chromedriver_autoinstaller.install()
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-# 🔐 Read secure credentials
+# 🔐 Load credentials
 USERNAME = os.getenv("LEETCODE_USER")
 PASSWORD = os.getenv("LEETCODE_PASS")
 
 if not USERNAME or not PASSWORD:
-    raise Exception("❌ Missing LEETCODE_USER or LEETCODE_PASS environment variables.")
+    raise Exception("❌ Missing LeetCode credentials. Please set LEETCODE_USER and LEETCODE_PASS.")
 
-# 🌐 Configure Chrome
+# 🌐 Headless browser setup
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--disable-gpu')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-
-print("🚀 Starting headless browser...")
 driver = webdriver.Chrome(options=options)
+wait = WebDriverWait(driver, 15)
 
 try:
-    # Step 1: Open login page
-    print("🔐 Navigating to login page...")
+    print("🚀 Opening LeetCode login page...")
     driver.get("https://leetcode.com/accounts/login/")
-    time.sleep(4)
 
-    # Step 2: Enter credentials using correct IDs
-    print("✏️ Entering login credentials...")
-    driver.find_element(By.ID, "id_login").send_keys(USERNAME)
+    # ✅ Wait for login fields to be present
+    print("⏳ Waiting for login form...")
+    wait.until(EC.presence_of_element_located((By.ID, "id_login"))).send_keys(USERNAME)
     driver.find_element(By.ID, "id_password").send_keys(PASSWORD)
     driver.find_element(By.ID, "signin_btn").click()
-    time.sleep(6)
+    print("🔓 Login submitted.")
 
-    # Step 3: Navigate to submissions
-    print("📄 Opening submissions page...")
+    # ✅ Wait for submissions page after login
+    print("📄 Navigating to submissions...")
     driver.get("https://leetcode.com/submissions/")
-    time.sleep(5)
+    wait.until(EC.presence_of_element_located((By.XPATH, "//a[contains(@href, '/submissions/detail/')]")))
 
-    # Step 4: Click the latest submission
-    print("🔎 Fetching latest submission...")
+    print("📌 Opening most recent submission...")
     latest_submission = driver.find_element(By.XPATH, "//a[contains(@href, '/submissions/detail/')]")
     latest_submission.click()
-    time.sleep(4)
 
-    # Step 5: Extract problem title
+    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "ace_content")))
+
     title = driver.title.split(" - ")[0].strip()
     filename_slug = title.replace(" ", "_").replace("/", "_")
     date_str = datetime.now().strftime("%Y-%m-%d")
+    code = driver.find_element(By.CLASS_NAME, "ace_content").text.strip()
 
-    # Step 6: Extract code from Monaco editor
-    print("📥 Extracting code...")
-    code_element = driver.find_element(By.CLASS_NAME, "ace_content")
-    code = code_element.text.strip()
-
-    # Step 7: Save code to file
+    # Save the solution
     solution_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'leetcode-solutions'))
     os.makedirs(solution_dir, exist_ok=True)
     file_path = os.path.join(solution_dir, f"{date_str}_{filename_slug}.txt")
-
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(code)
 
-    # Step 8: Update README
+    # Update README.md
     readme_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'README.md'))
     with open(readme_path, "w", encoding="utf-8") as readme:
         readme.write("# 🧠 Latest LeetCode Submission\n\n")
@@ -78,18 +69,18 @@ try:
         readme.write(f"> 🗓️ **{date_str}**\n")
         readme.write("> 🧑‍💻 **Solution**\n\n")
         readme.write("```java\n")
-        readme.write(code[:1000])  # Truncate preview
+        readme.write(code[:1000])  # Preview only first 1000 chars
         readme.write("\n```\n")
 
-    print(f"✅ Saved solution: {file_path}")
-    print(f"📄 Updated README.md successfully.")
+    print(f"✅ Solution saved to: {file_path}")
+    print(f"📄 README updated at: {readme_path}")
 
-except NoSuchElementException as e:
-    print("❌ Element not found. Check selector or page structure.")
-    print(e)
-except WebDriverException as e:
-    print("❌ WebDriver error occurred.")
-    print(e)
+except TimeoutException as te:
+    print("❌ Timeout waiting for an element to load.")
+    print(te)
+except NoSuchElementException as ne:
+    print("❌ Couldn't locate an expected element.")
+    print(ne)
 except Exception as e:
     print("❌ Unexpected error occurred.")
     print(e)
