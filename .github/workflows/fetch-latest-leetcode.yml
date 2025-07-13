@@ -36,19 +36,12 @@ jobs:
       - name: 📡 Run script to fetch submission
         run: python scripts/fetch_latest_submission.py
 
-      - name: 📝 Commit and Push Changes to main
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+      - name: 📝 Commit and Push
         run: |
           git config user.name "Omvir Gyan"
           git config user.email "omvirgyan3@gmail.com"
           git add README.md leetcode-solutions/ || true
           git commit -m "🔁 Auto-sync latest LeetCode solution" || echo "No changes to commit"
-
-          # Ensure push to main always using PAT
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/omvirgyan/leetcode-auto-sync.git
-          git config credential.helper store
-          echo "https://x-access-token:${GH_PAT}@github.com" > ~/.git-credentials
-
-          # Push directly to main
-          git push origin main
+          git push https://x-access-token:${GH_PAT}@github.com/omvirgyan/leetcode-auto-sync.git main
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
