@@ -29,7 +29,8 @@ jobs:
           sudo apt-get install -y wget unzip curl
 
           # Install Chrome
-          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          # Added --tries=5 and --timeout=30 to make the download more robust
+          wget --tries=5 --timeout=30 https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo apt install -y ./google-chrome-stable_current_amd64.deb
           google-chrome --version
 
