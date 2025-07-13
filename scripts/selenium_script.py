@@ -1,94 +1,101 @@
+# scripts/selenium_script.py
+
 import os
-import json
 import time
 from datetime import datetime
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-COOKIE_FILE = "leetcode_cookies.json"
+# Optional: LeetCode session cookie (set it in GitHub Secrets or locally)
+LEETCODE_SESSION = os.getenv("LEETCODE_SESSION")
 
-def save_cookies(driver, path):
-    with open(path, "w") as f:
-        json.dump(driver.get_cookies(), f)
+# Headless Chrome setup
+options = uc.ChromeOptions()
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--disable-gpu')
+options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36')
 
-def load_cookies(driver, path):
-    with open(path, "r") as f:
-        cookies = json.load(f)
-    for cookie in cookies:
-        if "sameSite" in cookie and cookie["sameSite"] == "None":
-            cookie["sameSite"] = "Strict"
-        driver.add_cookie(cookie)
+print("🚀 Launching browser...")
+driver = uc.Chrome(options=options, headless=True)
+wait = WebDriverWait(driver, 15)
 
-def setup_driver(headless=False):
-    options = Options()
-    if headless:
-        options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--remote-debugging-port=9222")
-    options.add_argument(f"--user-data-dir={os.path.abspath('chrome-profile')}")
-    return webdriver.Chrome(service=Service(), options=options)
+try:
+    # Step 1: Set session cookie and login
+    print("🔐 Navigating to LeetCode...")
+    driver.get("https://leetcode.com")
+    if LEETCODE_SESSION:
+        print("🍪 Injecting session cookie...")
+        driver.add_cookie({"name": "LEETCODE_SESSION", "value": LEETCODE_SESSION, "domain": ".leetcode.com", "path": "/"})
+        driver.refresh()
+        time.sleep(3)
 
-def login_and_save_cookies(driver):
-    print("🔑 Manual login required...")
-    driver.get("https://leetcode.com/accounts/login/")
-    print("⏳ Waiting for you to log in manually...")
-    WebDriverWait(driver, 300).until(
-        EC.presence_of_element_located((By.XPATH, "//img[contains(@alt, 'user')]"))
-    )
-    print("✅ Login successful, saving cookies...")
-    save_cookies(driver, COOKIE_FILE)
-
-def fetch_latest_submission(driver):
-    print("📄 Navigating to submissions page...")
+    # Step 2: Navigate to submission page
+    print("📄 Navigating to submissions...")
     driver.get("https://leetcode.com/submissions/")
-    wait = WebDriverWait(driver, 15)
-    wait.until(EC.presence_of_element_located((By.XPATH, "//a[contains(@href, '/submissions/detail/')]")))
-    
+    wait.until(EC.presence_of_element_located((By.XPATH, "//a[contains(@href, '/submissions/detail/')]") ))
+
     print("📌 Opening latest submission...")
-    latest = driver.find_element(By.XPATH, "//a[contains(@href, '/submissions/detail/')]")
-    latest.click()
-    
+    latest_submission = driver.find_element(By.XPATH, "//a[contains(@href, '/submissions/detail/')]")
+    submission_link = latest_submission.get_attribute("href")
+    latest_submission.click()
+
+    # Step 3: Extract title, code, language, and question link
     wait.until(EC.presence_of_element_located((By.CLASS_NAME, "ace_content")))
-    code = driver.find_element(By.CLASS_NAME, "ace_content").text.strip()
+    time.sleep(2)
+    
     title = driver.title.split(" - ")[0].strip()
+    filename_slug = title.replace(" ", "_").replace("/", "_")
     date_str = datetime.now().strftime("%Y-%m-%d")
+
+    code = driver.find_element(By.CLASS_NAME, "ace_content").text.strip()
+    lang = driver.find_element(By.CLASS_NAME, "ant-select-selection-item").text.strip().lower()
     
-    solution_dir = os.path.join(os.path.dirname(__file__), "../leetcode-solutions")
+    if "python" in lang:
+        ext = ".py"
+    elif "java" in lang:
+        ext = ".java"
+    else:
+        ext = ".txt"
+
+    # Question title and link
+    question_anchor = driver.find_element(By.XPATH, "//div[@class='text-label-1 dark:text-dark-label-1 break-all text-base font-medium']/a")
+    question_title = question_anchor.text.strip()
+    question_url = question_anchor.get_attribute("href")
+
+    # Step 4: Save solution file
+    solution_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'leetcode-solutions'))
     os.makedirs(solution_dir, exist_ok=True)
-    filename = f"{date_str}_{title.replace(' ', '_').replace('/', '_')}.txt"
-    file_path = os.path.join(solution_dir, filename)
-    
+    file_path = os.path.join(solution_dir, f"{date_str}_{filename_slug}{ext}")
+
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(code)
 
-    print(f"✅ Code saved to: {file_path}")
+    print(f"✅ Saved: {file_path}")
 
-if __name__ == "__main__":
-    driver = setup_driver(headless=False)
+    # Step 5: Update README.md
+    readme_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'README.md'))
+    with open(readme_path, "w", encoding="utf-8") as readme:
+        readme.write("# 🧠 Latest LeetCode Submission\n\n")
+        readme.write(f"> 📌 **{question_title}**\n")
+        readme.write(f"> 🔗 [View Question]({question_url})\n")
+        readme.write(f"> 🗓️ {date_str}\n")
+        readme.write("\n---\n\n")
+        readme.write(f"```{lang}\n")
+        readme.write(code[:1000])
+        readme.write("\n```\n")
 
-    try:
-        print("🌐 Connecting to LeetCode...")
-        driver.get("https://leetcode.com")
+    print(f"📄 README updated: {readme_path}")
 
-        if os.path.exists(COOKIE_FILE):
-            print("🍪 Found saved cookies. Attempting automatic login...")
-            load_cookies(driver, COOKIE_FILE)
-            driver.get("https://leetcode.com")
-            time.sleep(3)
-
-        # Check if user is logged in
-        if not driver.get_cookies() or "LEETCODE_SESSION" not in [c['name'] for c in driver.get_cookies()]:
-            login_and_save_cookies(driver)
-
-        fetch_latest_submission(driver)
-
-    except Exception as e:
-        print("❌ Error occurred:", e)
-
-    finally:
-        driver.quit()
+except TimeoutException as te:
+    print("❌ Timeout while waiting for an element:", te)
+except NoSuchElementException as ne:
+    print("❌ Element not found:", ne)
+except Exception as e:
+    print("❌ Error:", e)
+finally:
+    print("🧹 Closing browser...")
+    driver.quit()
