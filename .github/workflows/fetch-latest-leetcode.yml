@@ -12,6 +12,7 @@ jobs:
     env:
       LEETCODE_USER: ${{ secrets.LEETCODE_USER }}
       LEETCODE_PASS: ${{ secrets.LEETCODE_PASS }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     steps:
       - name: Checkout repo
@@ -39,10 +40,11 @@ jobs:
       - name: Run Selenium Script
         run: python scripts/selenium_script.py
 
-      - name: Commit updated README and solution
+      - name: Commit updated README and solution using GH_TOKEN
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.name "Omvir Gyan"
+          git config user.email "omvirgyan3@gmail.com"
           git add README.md leetcode-solutions/
           git commit -m "🔁 Auto-sync latest LeetCode solution" || echo "No changes to commit"
-          git push
+          git remote set-url origin https://omvirgyan:${GH_TOKEN}@github.com/omvirgyan/leetcode-auto-sync.git
+          git push origin main
