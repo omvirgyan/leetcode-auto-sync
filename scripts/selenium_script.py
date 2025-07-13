@@ -3,6 +3,11 @@
 import os
 import time
 from datetime import datetime
+
+# ✅ Automatically install compatible ChromeDriver
+import chromedriver_autoinstaller
+chromedriver_autoinstaller.install()
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -45,6 +50,7 @@ try:
     filename_slug = title.replace(" ", "_").replace("/", "_")
     date_str = datetime.now().strftime("%Y-%m-%d")
 
+    # 🛠️ NOTE: LeetCode uses Monaco editor (not raw <textarea>) — we'll get the code via class
     code_element = driver.find_element(By.CLASS_NAME, "ace_content")
     code = code_element.text.strip()
 
@@ -64,7 +70,7 @@ try:
         readme.write(f"> 🗓️ **{date_str}**\n")
         readme.write("> 🧑‍💻 **Solution**\n\n")
         readme.write("```java\n")
-        readme.write(code[:1000])  # truncate to avoid overflowing GitHub preview
+        readme.write(code[:1000])  # Limit to 1000 chars to avoid overflow
         readme.write("\n```\n")
 
     print(f"✅ Latest solution saved to: {file_path}")
