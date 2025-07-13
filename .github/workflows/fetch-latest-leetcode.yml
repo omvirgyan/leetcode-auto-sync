@@ -23,14 +23,34 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies (Selenium + Chrome + Chromedriver)
+      - name: Install Chrome and get matching ChromeDriver
         run: |
           sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-          sudo apt-get install -y chromedriver
-          pip install selenium
-          chromedriver --version
+          sudo apt-get install -y wget unzip curl
+
+          # Install Chrome
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt install -y ./google-chrome-stable_current_amd64.deb
           google-chrome --version
+
+          # Get Chrome major version (e.g. 138)
+          CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+\.\d+')
+          CHROME_MAJOR=$(echo $CHROME_VERSION | cut -d '.' -f 1)
+          echo "Chrome version: $CHROME_VERSION"
+          echo "Chrome major version: $CHROME_MAJOR"
+
+          # Get matching ChromeDriver version
+          CHROMEDRIVER_VERSION=$(curl -sS "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR")
+          echo "Matching ChromeDriver version: $CHROMEDRIVER_VERSION"
+
+          # Download and install ChromeDriver
+          wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
+          unzip /tmp/chromedriver.zip -d /usr/local/bin/
+          chmod +x /usr/local/bin/chromedriver
+          chromedriver --version
+
+      - name: Install Selenium
+        run: pip install selenium
 
       - name: Run Selenium Script
         run: python scripts/selenium_script.py
