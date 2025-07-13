@@ -1,7 +1,39 @@
-readme_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'README.md'))
-with open(readme_path, "w", encoding="utf-8") as readme:
-    readme.write("# 🧠 Latest LeetCode Submission\n\n")
-    readme.write(f"> 📌 **{title}**\n")
-    readme.write(f"> 📅 **{date}**\n")
-    readme.write(f"> 💻 **Language:** `{lang}`\n")
-    readme.write(f"> 🔗 [Problem Link]({problem_url})\n")
+# 🧠 Latest LeetCode Submission
+
+> 📌 **Edit Distance**
+> 📅 **2025-07-13**
+> 💻 **Language:** `java`
+> 🔗 [Problem Link](https://leetcode.com/problems/edit-distance/)
+
+## ✅ Submitted Code
+
+```java
+class Solution {
+    public int minDistance(String word1, String word2) {
+        int m = word1.length();
+        int n = word2.length();
+        int[][] dp = new int[m + 1][n + 1];
+
+        for (int i = 0; i <= m; i++)
+            dp[i][0] = i;
+        for (int j = 0; j <= n; j++)
+            dp[0][j] = j;
+
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else {
+                    dp[i][j] = 1 + Math.min(
+                            dp[i - 1][j - 1],
+                            Math.min(dp[i - 1][j],
+                                    dp[i][j - 1]));
+                }
+            }
+        }
+        return dp[m][n];
+    }
+}
+```
+
+<!-- Updated: 2025-07-13 17:22:06.186354 -->
