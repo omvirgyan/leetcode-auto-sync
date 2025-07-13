@@ -36,6 +36,6 @@ jobs:
           git add README.md leetcode-solutions/ || true
           git commit -m "🔁 Auto-sync latest LeetCode solution" || echo "No changes to commit"
           git status
-          git remote remove origin
-          git remote add origin https://x-access-token:${GH_PAT}@github.com/omvirgyan/leetcode-auto-sync.git
           git push https://x-access-token:${GH_PAT}@github.com/omvirgyan/leetcode-auto-sync.git main
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
