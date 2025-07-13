@@ -2,82 +2,71 @@ import os
 import requests
 from datetime import datetime
 
-# 📦 Prepare headers using your LeetCode session cookie
-LEETCODE_SESSION = os.getenv("LEETCODE_SESSION")
-if not LEETCODE_SESSION:
-    raise Exception("❌ Missing LEETCODE_SESSION. Set it as a GitHub secret.")
+# Load secrets from environment
+SESSION = os.getenv("LEETCODE_SESSION")
+CSRF_TOKEN = os.getenv("LEETCODE_CSRF")
 
+if not SESSION or not CSRF_TOKEN:
+    raise Exception("❌ LEETCODE_SESSION or LEETCODE_CSRF is missing")
+
+# LeetCode GraphQL endpoint
+URL = "https://leetcode.com/graphql"
+
+# Headers with session and csrf token
 HEADERS = {
+    "User-Agent": "Mozilla/5.0",
     "Content-Type": "application/json",
     "Referer": "https://leetcode.com",
-    "Cookie": f"LEETCODE_SESSION={LEETCODE_SESSION}",
-    "User-Agent": "Mozilla/5.0"
+    "X-CSRFToken": CSRF_TOKEN,
+    "cookie": f"LEETCODE_SESSION={SESSION}; csrftoken={CSRF_TOKEN};"
 }
 
-# 🔍 GraphQL query to get latest accepted submission
-query = {
+# Query to get recent AC submissions
+QUERY = {
+    "operationName": "recentAcSubmissions",
+    "variables": {"username": "Omvirgyan"},
     "query": """
-    query {
-      recentAcSubmissionList(limit: 1) {
+    query recentAcSubmissions($username: String!) {
+      recentAcSubmissionList(username: $username) {
         title
         titleSlug
-        lang
-        code
         timestamp
+        lang
       }
     }
     """
 }
 
-print("🚀 Fetching your latest LeetCode submission...")
+print("📡 Fetching latest accepted submission...")
+res = requests.post(URL, json=QUERY, headers=HEADERS)
+data = res.json()
 
-response = requests.post("https://leetcode.com/graphql", json=query, headers=HEADERS)
-if response.status_code != 200:
-    raise Exception(f"❌ Failed to fetch: {response.status_code} - {response.text}")
-
-submission = response.json()["data"]["recentAcSubmissionList"][0]
-
+submission = data["data"]["recentAcSubmissionList"][0]
 title = submission["title"]
-title_slug = submission["titleSlug"]
-lang = submission["lang"].lower()
-code = submission["code"]
-timestamp = int(submission["timestamp"])
+slug = submission["titleSlug"]
+lang = submission["lang"]
+ts = int(submission["timestamp"])
+date = datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+problem_url = f"https://leetcode.com/problems/{slug}/"
 
-# 🧠 Convert to proper extension
-ext_map = {
-    "python": "py",
-    "python3": "py",
-    "java": "java",
-    "cpp": "cpp",
-    "c": "c",
-    "javascript": "js",
-    "typescript": "ts",
+print(f"✅ Fetched: {title} ({lang})")
+
+# Fetch solution code
+solution_url = f"https://leetcode.com/graphql"
+solution_payload = {
+    "operationName": "mySubmissionDetail",
+    "variables": {
+        "submissionId": None  # Cannot fetch exact code without ID
+    },
+    "query": """
+    query mySubmissionDetail($submissionId: ID!) {
+      submissionDetail(submissionId: $submissionId) {
+        code
+        lang
+      }
+    }
+    """
 }
-ext = ext_map.get(lang, "txt")
 
-# 🧾 File naming
-date_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
-filename_slug = title_slug.replace("-", "_")
-filename = f"{date_str}_{filename_slug}.{ext}"
-solution_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'leetcode-solutions'))
-os.makedirs(solution_dir, exist_ok=True)
-file_path = os.path.join(solution_dir, filename)
-
-# 💾 Save code to file
-with open(file_path, "w", encoding="utf-8") as f:
-    f.write(code)
-
-print(f"✅ Saved: {file_path}")
-
-# 📝 Update README.md
-readme_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'README.md'))
-with open(readme_path, "w", encoding="utf-8") as readme:
-    readme.write("# 🧠 Latest LeetCode Submission\n\n")
-    readme.write(f"> 📌 [{title}](https://leetcode.com/problems/{title_slug}/)\n")
-    readme.write(f"> 🗓️ **{date_str}**\n")
-    readme.write(f"> 🧑‍💻 **Language**: `{lang}`\n\n")
-    readme.write("```" + ext + "\n")
-    readme.write(code[:1000])  # Limit preview to 1000 characters
-    readme.write("\n```\n")
-
-print(f"📄 README.md updated.")
+print("⚠️ Note: This method fetches metadata only (title, lang, link). Code content requires browser automation or ID access.")
+print(f"🔗 Problem: {problem_url}")
