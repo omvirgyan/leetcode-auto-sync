@@ -3,36 +3,34 @@ name: 🔁 Sync Latest LeetCode Submission
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *' # Every 6 hours
+    - cron: '0 */6 * * *'
 
 jobs:
-  leetcode-sync:
+  fetch-latest:
     runs-on: ubuntu-latest
-
     env:
       LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: 🐍 Set Up Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: 📦 Install Python Dependencies
+      - name: Install dependencies
         run: pip install requests
 
-      - name: 🚀 Run Submission Fetch Script
-        run: python scripts/fetch_leetcode_submission.py
+      - name: Run fetch script
+        run: python scripts/fetch_latest_submission.py
 
-      - name: ✅ Commit & Push Changes
+      - name: Commit & push
         run: |
           git config user.name "Omvir Gyan"
           git config user.email "omvirgyan3@gmail.com"
-          git add README.md leetcode-solutions/
-          git commit -m "🔁 Auto-sync latest LeetCode submission" || echo "No changes to commit"
-          git remote set-url origin https://omvirgyan:${GH_TOKEN}@github.com/omvirgyan/leetcode-auto-sync.git
-          git push origin main
+          git add README.md
+          git commit -m "📌 Update latest submission info" || echo "No changes to commit"
+          git push
