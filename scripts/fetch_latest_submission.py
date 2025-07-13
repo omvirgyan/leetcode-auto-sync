@@ -69,5 +69,6 @@ with open(readme_path, 'w', encoding='utf-8') as readme:
 
 print("✅ README.md updated successfully.")
 print(f"🔗 Problem: {problem_url}")
+print(submission)
 
 # 🚫 NOTE: Code content requires browser automation or submission ID, which this script does not handle.
