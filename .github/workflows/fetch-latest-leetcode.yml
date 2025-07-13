@@ -12,18 +12,17 @@ jobs:
     env:
       LEETCODE_USER: ${{ secrets.LEETCODE_USER }}
       LEETCODE_PASS: ${{ secrets.LEETCODE_PASS }}
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     steps:
-      - name: Checkout repository
+      - name: 📦 Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: Install latest Google Chrome
+      - name: 🌐 Install latest Google Chrome
         run: |
           wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
           sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list'
@@ -31,18 +30,19 @@ jobs:
           sudo apt-get install -y google-chrome-stable
           google-chrome --version
 
-      - name: Install Python dependencies
-        run: |
-          pip install selenium chromedriver-autoinstaller
+      - name: 📦 Install Python dependencies
+        run: pip install selenium chromedriver-autoinstaller
 
-      - name: Run Selenium Script
+      - name: 🤖 Run Selenium Script
         run: python scripts/selenium_script.py
 
-      - name: Commit updated README and solution using GH_TOKEN
+      - name: 🔧 Commit & Push Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "Omvir Gyan"
           git config user.email "omvirgyan3@gmail.com"
           git add README.md leetcode-solutions/
           git commit -m "🔁 Auto-sync latest LeetCode solution" || echo "No changes to commit"
-          git remote set-url origin https://omvirgyan:${GH_TOKEN}@github.com/omvirgyan/leetcode-auto-sync.git
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
           git push origin main
