@@ -1,55 +1,83 @@
-import requests
 import os
+import requests
 from datetime import datetime
 
-USERNAME = "Omvirgyan"  # Replace with your LeetCode username
-README_PATH = "README.md"
+# 📦 Prepare headers using your LeetCode session cookie
+LEETCODE_SESSION = os.getenv("LEETCODE_SESSION")
+if not LEETCODE_SESSION:
+    raise Exception("❌ Missing LEETCODE_SESSION. Set it as a GitHub secret.")
 
-# GraphQL query to get recent submissions
+HEADERS = {
+    "Content-Type": "application/json",
+    "Referer": "https://leetcode.com",
+    "Cookie": f"LEETCODE_SESSION={LEETCODE_SESSION}",
+    "User-Agent": "Mozilla/5.0"
+}
+
+# 🔍 GraphQL query to get latest accepted submission
 query = {
-    "operationName": "recentSubmissionList",
-    "variables": {"username": USERNAME},
     "query": """
-        query recentSubmissionList($username: String!) {
-          recentSubmissionList(username: $username) {
-            title
-            titleSlug
-            status
-            lang
-            time
-          }
-        }
+    query {
+      recentAcSubmissionList(limit: 1) {
+        title
+        titleSlug
+        lang
+        code
+        timestamp
+      }
+    }
     """
 }
 
-headers = {
-    "Content-Type": "application/json",
-    "Referer": f"https://leetcode.com/{USERNAME}/",
-    "Origin": "https://leetcode.com",
+print("🚀 Fetching your latest LeetCode submission...")
+
+response = requests.post("https://leetcode.com/graphql", json=query, headers=HEADERS)
+if response.status_code != 200:
+    raise Exception(f"❌ Failed to fetch: {response.status_code} - {response.text}")
+
+submission = response.json()["data"]["recentAcSubmissionList"][0]
+
+title = submission["title"]
+title_slug = submission["titleSlug"]
+lang = submission["lang"].lower()
+code = submission["code"]
+timestamp = int(submission["timestamp"])
+
+# 🧠 Convert to proper extension
+ext_map = {
+    "python": "py",
+    "python3": "py",
+    "java": "java",
+    "cpp": "cpp",
+    "c": "c",
+    "javascript": "js",
+    "typescript": "ts",
 }
+ext = ext_map.get(lang, "txt")
 
-response = requests.post("https://leetcode.com/graphql", json=query, headers=headers)
-data = response.json()
+# 🧾 File naming
+date_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
+filename_slug = title_slug.replace("-", "_")
+filename = f"{date_str}_{filename_slug}.{ext}"
+solution_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'leetcode-solutions'))
+os.makedirs(solution_dir, exist_ok=True)
+file_path = os.path.join(solution_dir, filename)
 
-try:
-    recent = data["data"]["recentSubmissionList"][0]  # Get the latest submission
+# 💾 Save code to file
+with open(file_path, "w", encoding="utf-8") as f:
+    f.write(code)
 
-    title = recent["title"]
-    slug = recent["titleSlug"]
-    lang = recent["lang"]
-    timestamp = datetime.fromtimestamp(recent["time"]).strftime("%Y-%m-%d %H:%M:%S")
-    link = f"https://leetcode.com/problems/{slug}/"
+print(f"✅ Saved: {file_path}")
 
-    # Update README.md
-    with open(README_PATH, "w", encoding="utf-8") as f:
-        f.write("# 🧠 Latest LeetCode Submission\n\n")
-        f.write(f"> 📌 **{title}**\n")
-        f.write(f"> 🗓️ **{timestamp}**\n")
-        f.write(f"> 🧑\u200d💻 **Language**: {lang}\n")
-        f.write(f"> 🔗 [Problem Link]({link})\n")
+# 📝 Update README.md
+readme_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'README.md'))
+with open(readme_path, "w", encoding="utf-8") as readme:
+    readme.write("# 🧠 Latest LeetCode Submission\n\n")
+    readme.write(f"> 📌 [{title}](https://leetcode.com/problems/{title_slug}/)\n")
+    readme.write(f"> 🗓️ **{date_str}**\n")
+    readme.write(f"> 🧑‍💻 **Language**: `{lang}`\n\n")
+    readme.write("```" + ext + "\n")
+    readme.write(code[:1000])  # Limit preview to 1000 characters
+    readme.write("\n```\n")
 
-    print(f"✅ Updated README.md with latest submission: {title}")
-
-except Exception as e:
-    print("❌ Failed to fetch or update submission info.")
-    print(e)
+print(f"📄 README.md updated.")
