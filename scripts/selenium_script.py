@@ -1,9 +1,6 @@
 import os
 from datetime import datetime
-
 import chromedriver_autoinstaller
-chromedriver_autoinstaller.install()
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -11,14 +8,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-# 🔐 Load credentials
+# Automatically install the ChromeDriver
+chromedriver_autoinstaller.install()
+
+# Load credentials from environment variables
 USERNAME = os.getenv("LEETCODE_USER")
 PASSWORD = os.getenv("LEETCODE_PASS")
 
 if not USERNAME or not PASSWORD:
     raise Exception("❌ Missing LeetCode credentials. Please set LEETCODE_USER and LEETCODE_PASS.")
 
-# 🌐 Headless browser setup
+# Headless browser setup
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--disable-gpu')
@@ -31,14 +31,14 @@ try:
     print("🚀 Opening LeetCode login page...")
     driver.get("https://leetcode.com/accounts/login/")
 
-    # ✅ Wait for login fields to be present
+    # Wait for login fields to be present
     print("⏳ Waiting for login form...")
-    wait.until(EC.presence_of_element_located((By.ID, "id_login"))).send_keys(USERNAME)
-    driver.find_element(By.ID, "id_password").send_keys(PASSWORD)
-    driver.find_element(By.ID, "signin_btn").click()
+    wait.until(EC.presence_of_element_located((By.NAME, "username"))).send_keys(USERNAME)  # Updated selector
+    wait.until(EC.presence_of_element_located((By.NAME, "password"))).send_keys(PASSWORD)  # Updated selector
+    driver.find_element(By.XPATH, "//button[contains(text(), 'Sign In')]").click()  # Updated selector
     print("🔓 Login submitted.")
 
-    # ✅ Wait for submissions page after login
+    # Wait for submissions page after login
     print("📄 Navigating to submissions...")
     driver.get("https://leetcode.com/submissions/")
     wait.until(EC.presence_of_element_located((By.XPATH, "//a[contains(@href, '/submissions/detail/')]")))
@@ -68,22 +68,4 @@ try:
         readme.write(f"> 📌 **{title}**\n")
         readme.write(f"> 🗓️ **{date_str}**\n")
         readme.write("> 🧑‍💻 **Solution**\n\n")
-        readme.write("```java\n")
-        readme.write(code[:1000])  # Preview only first 1000 chars
-        readme.write("\n```\n")
-
-    print(f"✅ Solution saved to: {file_path}")
-    print(f"📄 README updated at: {readme_path}")
-
-except TimeoutException as te:
-    print("❌ Timeout waiting for an element to load.")
-    print(te)
-except NoSuchElementException as ne:
-    print("❌ Couldn't locate an expected element.")
-    print(ne)
-except Exception as e:
-    print("❌ Unexpected error occurred.")
-    print(e)
-finally:
-    print("🧹 Closing browser...")
-    driver.quit()
+        readme.write("
