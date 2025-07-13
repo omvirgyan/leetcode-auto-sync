@@ -12,10 +12,18 @@ jobs:
     env:
       LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
       LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
     steps:
-      - name: 📥 Checkout repository
+      - name: 📥 Checkout repository (fetch full history)
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Needed to checkout branches properly
+
+      - name: 🔀 Ensure main branch is checked out
+        run: |
+          git fetch origin main || echo "⚠️ main branch not found remotely"
+          git checkout main || git checkout -b main
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v4
@@ -28,7 +36,7 @@ jobs:
       - name: 📡 Run script to fetch submission
         run: python scripts/fetch_latest_submission.py
 
-      - name: 📝 Commit and Push Changes
+      - name: 📝 Commit and Push Changes to main
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
@@ -37,12 +45,10 @@ jobs:
           git add README.md leetcode-solutions/ || true
           git commit -m "🔁 Auto-sync latest LeetCode solution" || echo "No changes to commit"
 
-          # Force credential for pushing
+          # Ensure push to main always using PAT
           git remote set-url origin https://x-access-token:${GH_PAT}@github.com/omvirgyan/leetcode-auto-sync.git
-
-          # Configure credential helper
           git config credential.helper store
           echo "https://x-access-token:${GH_PAT}@github.com" > ~/.git-credentials
 
-          # Now push
+          # Push directly to main
           git push origin main
