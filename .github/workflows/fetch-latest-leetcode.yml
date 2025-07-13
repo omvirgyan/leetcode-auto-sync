@@ -1,55 +1,38 @@
-name: 🔁 Sync Latest LeetCode Solution
+name: 🔁 Sync Latest LeetCode Submission
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *'  # Every 6 hours
+    - cron: '0 */6 * * *' # Every 6 hours
 
 jobs:
   leetcode-sync:
     runs-on: ubuntu-latest
 
     env:
-      DISPLAY: ":99"
-      LEETCODE_USER: ${{ secrets.LEETCODE_USER }}
-      LEETCODE_PASS: ${{ secrets.LEETCODE_PASS }}
+      LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     steps:
-      - name: 📦 Checkout repository
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v3
 
-      - name: 🐍 Set up Python
+      - name: 🐍 Set Up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: 🖥️ Start virtual display (xvfb)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb
-          Xvfb :99 -screen 0 1920x1080x24 &
-      
-      - name: 🌐 Install latest Google Chrome
-        run: |
-          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list'
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-          google-chrome --version
+      - name: 📦 Install Python Dependencies
+        run: pip install requests
 
-      - name: 📦 Install Python dependencies
-        run: pip install selenium chromedriver-autoinstaller
+      - name: 🚀 Run Submission Fetch Script
+        run: python scripts/fetch_leetcode_submission.py
 
-      - name: 🤖 Run Selenium Script
-        run: python scripts/selenium_script.py
-
-      - name: 🔧 Commit & Push Changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: ✅ Commit & Push Changes
         run: |
           git config user.name "Omvir Gyan"
           git config user.email "omvirgyan3@gmail.com"
           git add README.md leetcode-solutions/
-          git commit -m "🔁 Auto-sync latest LeetCode solution" || echo "No changes to commit"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+          git commit -m "🔁 Auto-sync latest LeetCode submission" || echo "No changes to commit"
+          git remote set-url origin https://omvirgyan:${GH_TOKEN}@github.com/omvirgyan/leetcode-auto-sync.git
           git push origin main
