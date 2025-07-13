@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import time
 
 import chromedriver_autoinstaller
 chromedriver_autoinstaller.install()
@@ -10,6 +11,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+
 
 # 🔐 Load credentials
 USERNAME = os.getenv("LEETCODE_USER")
@@ -25,106 +27,94 @@ options.add_argument('--disable-gpu')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 driver = webdriver.Chrome(options=options)
-wait = WebDriverWait(driver, 15)
+wait = WebDriverWait(driver, 20)
 
 try:
     print("🚀 Opening LeetCode login page...")
     driver.get("https://leetcode.com/accounts/login/")
 
+    # ✅ Wait for login form fields
     print("⏳ Waiting for login fields...")
-    wait.until(EC.presence_of_element_located((By.ID, "id_login"))).send_keys(USERNAME)
-    driver.find_element(By.ID, "id_password").send_keys(PASSWORD)
-    driver.find_element(By.ID, "signin_btn").click()
+    username_input = wait.until(EC.presence_of_element_located((By.NAME, "login")))
+    username_input.clear()
+    username_input.send_keys(USERNAME)
+
+    password_input = wait.until(EC.presence_of_element_located((By.NAME, "password")))
+    password_input.clear()
+    password_input.send_keys(PASSWORD)
+
+    wait.until(EC.element_to_be_clickable((By.ID, "signin_btn"))).click()
     print("🔓 Login submitted!")
 
+    # ✅ Navigate to submissions
     print("📄 Navigating to submissions page...")
     driver.get("https://leetcode.com/submissions/")
     wait.until(EC.presence_of_element_located((By.XPATH, "//a[contains(@href, '/submissions/detail/')]")))
 
-    print("📌 Opening latest submission...")
+    print("📌 Opening most recent submission...")
     latest_submission = driver.find_element(By.XPATH, "//a[contains(@href, '/submissions/detail/')]")
     submission_url = latest_submission.get_attribute("href")
-    latest_submission.click()
+    driver.get(submission_url)
 
-    print("🧠 Waiting for code editor to load...")
     wait.until(EC.presence_of_element_located((By.CLASS_NAME, "ace_content")))
+    time.sleep(1)  # Sometimes needed for Monaco editor
 
-    # 🧾 Problem title and slug
-    title_element = wait.until(EC.presence_of_element_located((By.XPATH, "//a[contains(@href, '/problems/')]")))
-    problem_title = title_element.text.strip()
-    problem_link = title_element.get_attribute("href")
+    # ✅ Extract info
+    print("🧠 Fetching solution data...")
+    title_element = driver.find_element(By.XPATH, "//div[contains(@class,'css-v3d350')]")
+    title = title_element.text.strip()
 
-    # 🧠 Detect language
-    lang_element = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "ant-select-selection-item")))
+    code_element = driver.find_element(By.CLASS_NAME, "ace_content")
+    code = code_element.text.strip()
+
+    lang_element = driver.find_element(By.XPATH, "//span[contains(text(),'Language')]/following-sibling::div")
     language = lang_element.text.strip().lower()
 
-    # 🧩 Language-to-extension mapping
-    ext_map = {
+    # 🧠 Detect file extension
+    ext = {
         "python": "py",
         "python3": "py",
         "java": "java",
-        "cpp": "cpp",
         "c++": "cpp",
         "c": "c",
-        "javascript": "js",
-        "typescript": "ts",
-        "c#": "cs",
-        "golang": "go",
-        "ruby": "rb",
-        "swift": "swift",
-        "kotlin": "kt",
-        "rust": "rs"
-    }
-    file_ext = ext_map.get(language, "txt")
+        "javascript": "js"
+    }.get(language, "txt")
 
-    # 🧾 Extract code lines from Monaco editor
-    editor = driver.find_element(By.CLASS_NAME, "ace_content")
-    lines = editor.find_elements(By.CSS_SELECTOR, ".ace_line")
-    code = "\n".join(line.text for line in lines if line.text.strip())
-
-    if not code:
-        raise Exception("❌ Code extraction failed! No code lines found.")
-
-    # 📁 Save solution file
-    filename_slug = problem_title.replace(" ", "_").replace("/", "_")
+    filename_slug = title.replace(" ", "_").replace("/", "_")
     date_str = datetime.now().strftime("%Y-%m-%d")
+    filename = f"{date_str}_{filename_slug}.{ext}"
+
+    # 📁 Save to file
     solution_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'leetcode-solutions'))
     os.makedirs(solution_dir, exist_ok=True)
-    file_path = os.path.join(solution_dir, f"{date_str}_{filename_slug}.{file_ext}")
+    file_path = os.path.join(solution_dir, filename)
+
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(code)
 
-    # 📄 Generate README.md preview
+    # 📝 Update README
     readme_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'README.md'))
     with open(readme_path, "w", encoding="utf-8") as readme:
         readme.write("# 🧠 Latest LeetCode Submission\n\n")
-        readme.write(f"> 📌 **[{problem_title}]({problem_link})**\n")
+        readme.write(f"> 📌 **[{title}]({submission_url})**\n")
         readme.write(f"> 🗓️ **{date_str}**\n")
-        readme.write(f"> 💻 **Language**: `{language}`\n\n")
-        readme.write(f"```{file_ext}\n")
-        readme.write(code[:1000])  # Limit preview
+        readme.write(f"> 💻 **Language:** `{language}`\n\n")
+        readme.write("```" + ext + "\n")
+        readme.write(code[:1000])  # Limit preview to first 1000 characters
         readme.write("\n```\n")
 
-    # ✅ Print useful debug info
-    print("✅ Submission fetched successfully:")
-    print(f"🔖 Title: {problem_title}")
-    print(f"🔗 Link: {problem_link}")
-    print(f"💻 Language: {language}")
-    print(f"📁 Saved at: {file_path}")
-    print("📄 Code preview:")
-    print("-" * 40)
-    print("\n".join(code.splitlines()[:10]))  # print first 10 lines
-    print("... (truncated)")
-    print("-" * 40)
+    print(f"✅ Saved: {file_path}")
+    print(f"📄 Updated: {readme_path}")
+    print(f"🔗 Problem Link: {submission_url}")
 
 except TimeoutException as te:
-    print("❌ Timeout waiting for an element to load.")
+    print("❌ Timeout waiting for an element.")
     print(te)
 except NoSuchElementException as ne:
-    print("❌ Couldn't locate an expected element.")
+    print("❌ Element not found.")
     print(ne)
 except Exception as e:
-    print("❌ Unexpected error occurred.")
+    print("❌ Unexpected error.")
     print(e)
 finally:
     print("🧹 Closing browser...")
