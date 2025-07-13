@@ -26,14 +26,16 @@ jobs:
       - name: Install Selenium
         run: pip install selenium
 
-      - name: Install Chrome & ChromeDriver
+      - name: Install Chrome & ChromeDriver (Fixed v138)
         run: |
           sudo apt-get update
           sudo apt-get install -y wget unzip
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo apt install -y ./google-chrome-stable_current_amd64.deb
-          CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
-          wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip
+
+          # ✅ Fix ChromeDriver version to match Chrome v138
+          CHROMEDRIVER_VERSION=138.0.7204.94
+          wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
           unzip /tmp/chromedriver.zip -d /usr/local/bin/
           chmod +x /usr/local/bin/chromedriver
 
