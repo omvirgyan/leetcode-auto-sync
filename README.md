@@ -1,39 +1,30 @@
 # 🧠 Latest LeetCode Submission
 
-> 📌 **Edit Distance**
-> 📅 **2025-07-13**
+> 📌 **Pascal's Triangle II**
+> 📅 **2025-07-14**
 > 💻 **Language:** `java`
-> 🔗 [Problem Link](https://leetcode.com/problems/edit-distance/)
+> 🔗 [Problem Link](https://leetcode.com/problems/pascals-triangle-ii/)
 
 ## ✅ Submitted Code
 
 ```java
+import java.util.*;
+
 class Solution {
-    public int minDistance(String word1, String word2) {
-        int m = word1.length();
-        int n = word2.length();
-        int[][] dp = new int[m + 1][n + 1];
-
-        for (int i = 0; i <= m; i++)
-            dp[i][0] = i;
-        for (int j = 0; j <= n; j++)
-            dp[0][j] = j;
-
-        for (int i = 1; i <= m; i++) {
-            for (int j = 1; j <= n; j++) {
-                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
-                    dp[i][j] = dp[i - 1][j - 1];
-                } else {
-                    dp[i][j] = 1 + Math.min(
-                            dp[i - 1][j - 1],
-                            Math.min(dp[i - 1][j],
-                                    dp[i][j - 1]));
-                }
+    public List<Integer> getRow(int rowIndex) {
+        List<Integer> row = new ArrayList<>();
+        row.add(1);
+        for (int i = 1; i <= rowIndex; i++) {
+            for (int j = row.size() - 1; j >= 1; j--) {
+                row.set(j, row.get(j) + row.get(j - 1));
             }
+            row.add(1); // last element is always 1
         }
-        return dp[m][n];
+        
+        return row;
     }
 }
+
 ```
 
-<!-- Updated: 2025-07-14 18:39:37.901710 -->
+<!-- Updated: 2025-07-14 20:10:55.441858 -->
