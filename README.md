@@ -1,29 +1,28 @@
 # 🧠 Latest LeetCode Submission
 
-> 📌 **Fibonacci Number**
+> 📌 **Min Cost Climbing Stairs**
 > 📅 **2025-07-15**
 > 💻 **Language:** `java`
-> 🔗 [Problem Link](https://leetcode.com/problems/fibonacci-number/)
+> 🔗 [Problem Link](https://leetcode.com/problems/min-cost-climbing-stairs/)
 
 ## ✅ Submitted Code
 
 ```java
-class Solution {
-   public int fibByDp(int n,int arr[]){
-    if(n==0 || n==1) return n;
-    if(arr[n]!=-1) return arr[n];
-    arr[n]=fibByDp(n-1,arr) + fibByDp(n-2,arr);
-    return arr[n];
-   }
+public class Solution {
+    public int minCost(int[] cost, int idx, int[] dp) {
+        if(idx == 0 || idx == 1) return cost[idx];
+        if(dp[idx] != -1) return dp[idx];
+        return dp[idx] = cost[idx] + Math.min(minCost(cost, idx - 1, dp), minCost(cost, idx - 2, dp));
+    }
 
-    public int fib(int n) {
-    int[] arr=new int[n+1];
-    Arrays.fill(arr,-1);
-    int ans =fibByDp(n,arr);
-    return ans;
-        
+    public int minCostClimbingStairs(int[] cost) {
+        int n = cost.length;
+        int[] dp = new int[n];
+        Arrays.fill(dp, -1);
+        return Math.min(minCost(cost, n - 1, dp), minCost(cost, n - 2, dp));
     }
 }
+
 ```
 
-<!-- Updated: 2025-07-15 17:40:40.873320 -->
+<!-- Updated: 2025-07-15 17:59:23.125762 -->
