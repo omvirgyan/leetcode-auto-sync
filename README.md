@@ -1,26 +1,38 @@
 # 🧠 Latest LeetCode Submission
 
-> 📌 **Jump Game**
-> 📅 **2025-07-16**
+> 📌 **Summary Ranges**
+> 📅 **2025-07-17**
 > 💻 **Language:** `java`
-> 🔗 [Problem Link](https://leetcode.com/problems/jump-game/)
+> 🔗 [Problem Link](https://leetcode.com/problems/summary-ranges/)
 
 ## ✅ Submitted Code
 
 ```java
-public class Solution {
-    public boolean canJump(int[] nums) {
-        int maxReach = 0; 
-        for (int i = 0; i < nums.length; i++) {
-            if (i > maxReach) {
-                return false;  
+class Solution {
+    public List<String> summaryRanges(int[] nums) {
+        List<String> result = new ArrayList<>();
+        int n = nums.length;
+        if (n == 0) return result;
+        int start = nums[0];
+        for (int i = 1; i < n; i++) {
+            if (nums[i] != nums[i - 1] + 1) {
+                if (start == nums[i - 1]) {
+                    result.add(String.valueOf(start));
+                } else {
+                    result.add(start + "->" + nums[i - 1]);
+                }
+                start = nums[i];
             }
-            maxReach = Math.max(maxReach, i + nums[i]);  
-           
         }
-        return true;
+        if (start == nums[n - 1]) {
+            result.add(String.valueOf(start));
+        } else {
+            result.add(start + "->" + nums[n - 1]);
+        }
+        return result;
     }
 }
+
 ```
 
-<!-- Updated: 2025-07-17 17:59:17.235541 -->
+<!-- Updated: 2025-07-17 18:29:47.902826 -->
