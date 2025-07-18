@@ -1,38 +1,27 @@
 # 🧠 Latest LeetCode Submission
 
-> 📌 **Summary Ranges**
-> 📅 **2025-07-17**
+> 📌 **N-th Tribonacci Number**
+> 📅 **2025-07-18**
 > 💻 **Language:** `java`
-> 🔗 [Problem Link](https://leetcode.com/problems/summary-ranges/)
+> 🔗 [Problem Link](https://leetcode.com/problems/n-th-tribonacci-number/)
 
 ## ✅ Submitted Code
 
 ```java
 class Solution {
-    public List<String> summaryRanges(int[] nums) {
-        List<String> result = new ArrayList<>();
-        int n = nums.length;
-        if (n == 0) return result;
-        int start = nums[0];
-        for (int i = 1; i < n; i++) {
-            if (nums[i] != nums[i - 1] + 1) {
-                if (start == nums[i - 1]) {
-                    result.add(String.valueOf(start));
-                } else {
-                    result.add(start + "->" + nums[i - 1]);
-                }
-                start = nums[i];
-            }
+    public int tribonacci(int n) {
+        if(n==0||n==1) return n;
+        if(n==2) return 1;
+        int[] dp=new int[n+1];
+        dp[0]=0;
+        dp[1]=1;
+        dp[2]=1;
+        for(int i=3;i<=n;i++){
+            dp[i]=dp[i-1]+dp[i-2]+dp[i-3];
         }
-        if (start == nums[n - 1]) {
-            result.add(String.valueOf(start));
-        } else {
-            result.add(start + "->" + nums[n - 1]);
-        }
-        return result;
+        return dp[n];
     }
 }
-
 ```
 
-<!-- Updated: 2025-07-18 13:54:23.819232 -->
+<!-- Updated: 2025-07-18 14:09:58.025932 -->
