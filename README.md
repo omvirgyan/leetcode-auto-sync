@@ -1,39 +1,34 @@
 # 🧠 Latest LeetCode Submission
 
-> 📌 **Edit Distance**
-> 📅 **2025-07-23**
+> 📌 **House Robber II**
+> 📅 **2025-07-24**
 > 💻 **Language:** `java`
-> 🔗 [Problem Link](https://leetcode.com/problems/edit-distance/)
+> 🔗 [Problem Link](https://leetcode.com/problems/house-robber-ii/)
 
 ## ✅ Submitted Code
 
 ```java
 class Solution {
-    public int minDistance(String word1, String word2) {
-        int m = word1.length();
-        int n = word2.length();
-        int[][] dp = new int[m + 1][n + 1];
-
-        for (int i = 0; i <= m; i++)
-            dp[i][0] = i;
-        for (int j = 0; j <= n; j++)
-            dp[0][j] = j;
-
-        for (int i = 1; i <= m; i++) {
-            for (int j = 1; j <= n; j++) {
-                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
-                    dp[i][j] = dp[i - 1][j - 1];
-                } else {
-                    dp[i][j] = 1 + Math.min(
-                            dp[i - 1][j - 1],
-                            Math.min(dp[i - 1][j],
-                                    dp[i][j - 1]));
-                }
-            }
-        }
-        return dp[m][n];
+    public int amountRob(int[] arr, int start, int end, int[] dp) {
+        if(start > end) return 0;
+        if(dp[start] != -1) return dp[start];
+        int take = arr[start] + amountRob(arr, start + 2, end, dp);
+        int skip = amountRob(arr, start + 1, end, dp);
+        return dp[start] = Math.max(take, skip);
+    }
+    public int rob(int[] nums) {
+        int n = nums.length;
+        if(n == 1) return nums[0];
+        int[] dp1 = new int[n];
+        int[] dp2 = new int[n];
+        Arrays.fill(dp1, -1);
+        Arrays.fill(dp2, -1);
+        int case1 = amountRob(nums, 0, n - 2, dp1); 
+        int case2 = amountRob(nums, 1, n - 1, dp2);  
+        return Math.max(case1, case2);
     }
 }
+
 ```
 
-<!-- Updated: 2025-07-24 17:41:41.998585 -->
+<!-- Updated: 2025-07-24 17:59:27.960912 -->
