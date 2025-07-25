@@ -1,34 +1,33 @@
 # 🧠 Latest LeetCode Submission
 
-> 📌 **House Robber II**
-> 📅 **2025-07-24**
+> 📌 **Count Square Submatrices with All Ones**
+> 📅 **2025-07-25**
 > 💻 **Language:** `java`
-> 🔗 [Problem Link](https://leetcode.com/problems/house-robber-ii/)
+> 🔗 [Problem Link](https://leetcode.com/problems/count-square-submatrices-with-all-ones/)
 
 ## ✅ Submitted Code
 
 ```java
 class Solution {
-    public int amountRob(int[] arr, int start, int end, int[] dp) {
-        if(start > end) return 0;
-        if(dp[start] != -1) return dp[start];
-        int take = arr[start] + amountRob(arr, start + 2, end, dp);
-        int skip = amountRob(arr, start + 1, end, dp);
-        return dp[start] = Math.max(take, skip);
+    public int countSquares(int[][] matrix) {
+         int m = matrix.length;
+        int n = matrix[0].length;
+        int count=0;
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+              if(matrix[i][j]==0) continue;
+              if(i>0 && j>0){
+                matrix[i][j] +=min(matrix[i-1][j],matrix[i][j-1],matrix[i-1][j-1]);
+              }
+              count +=matrix[i][j];
+            }
+        }
+        return count;
     }
-    public int rob(int[] nums) {
-        int n = nums.length;
-        if(n == 1) return nums[0];
-        int[] dp1 = new int[n];
-        int[] dp2 = new int[n];
-        Arrays.fill(dp1, -1);
-        Arrays.fill(dp2, -1);
-        int case1 = amountRob(nums, 0, n - 2, dp1); 
-        int case2 = amountRob(nums, 1, n - 1, dp2);  
-        return Math.max(case1, case2);
+    public static int  min(int a,int b,int c){
+        return Math.min(a,Math.min(b,c));
     }
 }
-
 ```
 
-<!-- Updated: 2025-07-25 17:59:27.601745 -->
+<!-- Updated: 2025-07-25 18:30:24.135269 -->
