@@ -1,7 +1,7 @@
 # 🧠 Latest LeetCode Submission
 
 > 📌 **Longest Subarray With Maximum Bitwise AND**
-> 📅 **2025-07-31**
+> 📅 **2025-08-01**
 > 💻 **Language:** `java`
 > 🔗 [Problem Link](https://leetcode.com/problems/longest-subarray-with-maximum-bitwise-and/)
 
@@ -30,4 +30,4 @@ class Solution {
 
 ```
 
-<!-- Updated: 2025-08-01 17:43:00.325214 -->
+<!-- Updated: 2025-08-01 17:59:33.178176 -->
