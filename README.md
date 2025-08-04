@@ -1,26 +1,23 @@
 # 🧠 Latest LeetCode Submission
 
-> 📌 **Excel Sheet Column Title**
-> 📅 **2025-08-03**
+> 📌 **N-Repeated Element in Size 2N Array**
+> 📅 **2025-08-04**
 > 💻 **Language:** `java`
-> 🔗 [Problem Link](https://leetcode.com/problems/excel-sheet-column-title/)
+> 🔗 [Problem Link](https://leetcode.com/problems/n-repeated-element-in-size-2n-array/)
 
 ## ✅ Submitted Code
 
 ```java
 class Solution {
-    public String convertToTitle(int columnNumber) {
-        StringBuilder sb = new StringBuilder();
-        while (columnNumber > 0) {
-            columnNumber--;
-            int rem = columnNumber % 26;
-            sb.append((char)(rem + 'A'));
-            columnNumber /= 26;
+    public int repeatedNTimes(int[] nums) {
+        HashMap<Integer,Integer> map=new HashMap<>();
+        for(int i=0;i<nums.length;i++){
+            map.put(nums[i],map.getOrDefault(nums[i],0)+1);
+            if(map.get(nums[i])>1) return nums[i];
         }
-        return sb.reverse().toString();
+        return 0;
     }
 }
-
 ```
 
-<!-- Updated: 2025-08-04 18:32:51.211590 -->
+<!-- Updated: 2025-08-04 19:10:40.383849 -->
