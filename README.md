@@ -1,23 +1,36 @@
 # 🧠 Latest LeetCode Submission
 
-> 📌 **N-Repeated Element in Size 2N Array**
-> 📅 **2025-08-04**
+> 📌 **Longest Increasing Subsequence**
+> 📅 **2025-08-05**
 > 💻 **Language:** `java`
-> 🔗 [Problem Link](https://leetcode.com/problems/n-repeated-element-in-size-2n-array/)
+> 🔗 [Problem Link](https://leetcode.com/problems/longest-increasing-subsequence/)
 
 ## ✅ Submitted Code
 
 ```java
 class Solution {
-    public int repeatedNTimes(int[] nums) {
-        HashMap<Integer,Integer> map=new HashMap<>();
-        for(int i=0;i<nums.length;i++){
-            map.put(nums[i],map.getOrDefault(nums[i],0)+1);
-            if(map.get(nums[i])>1) return nums[i];
+    public int lengthOfLIS(int[] nums) {
+        if (nums.length == 0) return 0;
+
+        int[] dp = new int[nums.length];
+        dp[0] = 1;
+        int ans = 1;
+
+        for (int i = 1; i < dp.length; i++) {
+            int max = 0;
+            for (int j = 0; j < i; j++) {
+                if (nums[i] > nums[j]) { 
+                    max = Math.max(max, dp[j]);
+                }
+            }
+            dp[i] = max + 1;
+            ans = Math.max(ans, dp[i]);
         }
-        return 0;
+
+        return ans;
     }
 }
+
 ```
 
-<!-- Updated: 2025-08-05 17:59:25.481856 -->
+<!-- Updated: 2025-08-05 18:33:49.861449 -->
