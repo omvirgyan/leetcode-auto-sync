@@ -3,7 +3,7 @@ name: 🔁 Sync Latest LeetCode Submission
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/29 * * * *'  # Runs every 30 min
+    - cron: '0 */8 * * *'  # Runs every 8 hours
 
 jobs:
   leetcode-sync:
